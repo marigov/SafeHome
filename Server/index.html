@@ -1,0 +1,194 @@
+<!--Written by Miquel Rigo - 2016 -->
+  <html>
+    <head>
+	      <!--Import Google Icon Font-->
+      <link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      <!--Import materialize.css-->
+      <link type="text/css" rel="stylesheet" href="static/css/materialize.min.css"  media="screen,projection"/>
+
+      <!--Let browser know website is optimized for mobile-->
+      <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    </head>
+
+	<body>
+		<nav class="grey darken-3" role="navigation">
+			<div class="nav-wrapper container"><a id="logo-container" href="#" class="brand-logo center">SafeHome</a>
+			</div>
+		</nav>
+	<div class="container">
+		<div class="row">
+			<div class="col s12 l6">
+				<div class="card">
+					<div class="card-panel center-align">
+						<span class="card-title">Temperature</span>
+						<br>
+						<br>
+						<div class="center-align">
+							<canvas id="mycanvasTemp" width="300" height="200"></canvas>
+						</div>
+
+					</div>
+				</div>
+			</div>
+			<div class="col s12 l6">
+				<div class="card">
+					<div class="card-panel center-align">
+						<span class="card-title">Light intensity</span>
+						<br>
+						<br>
+						<div class="center-align">
+							<canvas id="mycanvasLight" width="300px" height="200px"></canvas>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col s12 l6">
+				<div class="card">
+					<div class="card-panel center-align">
+						<span class="card-title">Motion</span>
+						<br>
+						<br>
+						<div class="center-align">
+							<canvas id="mycanvasMotion" width="300" height="200"></canvas>
+						</div>
+
+					</div>
+				</div>
+			</div>
+			<div class="col s12 l6">
+				 <ul class="collapsible" data-collapsible="accordion">
+					 <li>
+					 <div class="collapsible-header temperature"><i class="material-icons">trending_up</i>Temperature</div>
+						 <div class="collapsible-body">
+								<ul class="collection">
+									 <li class="collection-item" id="temp_d"></li>
+									 <li class="collection-item" id="max_t">Max: 30ºC</li>
+								</ul>
+						</div>
+					 </li>
+					 <li>
+					 <div class="collapsible-header"><i class="material-icons">settings_input_antenna</i>Light intensity</div>
+						<div class="collapsible-body">
+								<ul class="collection">
+									 <li class="collection-item" id="light_d"></li>
+									 <li class="collection-item" id="max_l">Max: 900</li>
+								</ul>
+						</div>
+					 </li>
+					 <li>
+
+					 <div class="collapsible-header motion"><i class="material-icons">settings_remote</i>Motion</div>
+					 	<div class="collapsible-body">
+							<ul class="collection">
+								<li class="collection-item" id="motion_d"></li>
+							</ul>
+							<ul class="collection">
+								<li class="collection-item" id="motionDetected">Motion not detected.</li>
+							</ul>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</div>
+
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+<script type="text/javascript" src="static/smoothie.js"></script>
+<script type="text/javascript" src="static/moment.js"></script>
+
+
+<script>
+	var socket = io();
+ 	var smoothieTemp = new SmoothieChart({maxValue:40, minValue:0,timestampFormatter:SmoothieChart.timeFormatter});
+  	smoothieTemp.streamTo(document.getElementById("mycanvasTemp"));
+
+  	var smoothieLight = new SmoothieChart({maxValue:800, minValue:0,timestampFormatter:SmoothieChart.timeFormatter});
+  	smoothieLight.streamTo(document.getElementById("mycanvasLight"));
+
+  	var smoothieMotion = new SmoothieChart({maxValue:2, minValue:0,timestampFormatter:SmoothieChart.timeFormatter});
+  	smoothieMotion.streamTo(document.getElementById("mycanvasMotion"));
+
+
+
+	var line1 = new TimeSeries();
+    var line2 = new TimeSeries();
+    var line3 = new TimeSeries();
+
+
+
+	socket.on('message', function(msg){
+
+
+		$('#temp_d').text("Current: " + msg.temp + " ºC");
+		$('#light_d').text("Current: " + msg.light);
+		$('#motion_d').text("Current: " + msg.motion);
+
+		$('#max_t').text("Max: " + msg.maxTemp + " ºC at "+msg.dateTemp);
+		$('#max_l').text("Max: " + msg.maxLight + " at " + msg.dateLight );
+
+
+		if(msg.currentMotion==1){
+
+			$('#motionDetected').text("Motion detected at: "+ msg.dateMotion);
+			$('.collapsible-header.motion').addClass('red lighten-1');
+
+
+		}
+
+		else if (msg.currentMotion==0){
+			$('#motionDetected').text("No motion detected.");
+			$('.collapsible-header.motion').removeClass('red lighten-1');
+
+
+
+		}
+
+		if(msg.temp > 40){
+
+			$('.collapsible-header.temperature').addClass('red lighten-1');
+
+
+		}
+		else {
+
+			$('.collapsible-header.temperature').removeClass('red lighten-1');
+
+
+
+		}
+
+
+
+
+		line1.append(new Date().getTime(),msg.temp);
+		line2.append(new Date().getTime(),msg.light);
+		line3.append(new Date().getTime(),msg.motion);
+
+
+
+		});
+
+
+	smoothieTemp.addTimeSeries(line1, {lineWidth:2,strokeStyle:'#e74c3c'});
+	smoothieLight.addTimeSeries(line2, {lineWidth:2,strokeStyle:'#f1c40f'});
+	smoothieMotion.addTimeSeries(line3, {lineWidth:2,strokeStyle:'#e6e6e6'});
+
+
+
+	smoothieTemp.streamTo(document.getElementById("mycanvasTemp"), 1000 /*delay*/);
+	smoothieLight.streamTo(document.getElementById("mycanvasLight"), 1000 /*delay*/);
+	smoothieMotion.streamTo(document.getElementById("mycanvasMotion"), 1000 /*delay*/);
+
+
+
+
+</script>
+
+	  <!--Import jQuery before materialize.js-->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="static/js/materialize.min.js"></script>
+	</body>
+</html>
