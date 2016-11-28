@@ -3,9 +3,9 @@ The SafeHome Engduino Application is a multitool project that utilises the light
 
 With this application, we can get the following real-time data (locally and on a web server):
 
-	- The current and maximum temperature.
-	- The current and maximum light intensity.
-	- The opening of a door (ideally) or other kind of motion detection and the exact time of the event.
+1. The current and maximum temperature.
+2. The current and maximum light intensity.
+3. The opening of a door (ideally) or other kind of motion detection and the exact time of the event.
 
 **Set up and run the application locally**
 
